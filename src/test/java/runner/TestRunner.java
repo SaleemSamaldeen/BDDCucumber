@@ -8,10 +8,5 @@ import org.junit.runner.RunWith;
 @CucumberOptions(features = {"src/main/resources/features"}, glue = {"stepDefinitions"}, monochrome = true, publish = true, plugin = {
         "com.aventstack.extentreports.cucumber.adapter.ExtentCucumberAdapter:"})
 public class TestRunner {
-//	@Override
-//	@DataProvider(parallel = true)
-//	public Object[][] scenarios() {
-//		return super.scenarios();
-//	}
 
 }
