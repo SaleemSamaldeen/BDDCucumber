@@ -21,7 +21,7 @@ public class BaseClass {
             return new CarTypes(response.jsonPath().get("page"), response.jsonPath().get("pageSize"),
                     response.jsonPath().get("totalPageCount"), response.jsonPath().get("wkda"));
         } catch (ClassCastException e) {
-            throw new Exception("Incorrect data displayed while trying to fetch Car main types");
+            throw new Exception("Incorrect data displayed while trying to fetch Car main types using parameter " + pathParameter);
         }
     }
 
@@ -31,7 +31,7 @@ public class BaseClass {
             return new BuiltYear(response.jsonPath().get("page"), response.jsonPath().get("pageSize"),
                     response.jsonPath().get("totalPageCount"), response.jsonPath().get("wkda"));
         } catch (ClassCastException e) {
-            throw new Exception("Incorrect data displayed while trying to fetch Car Built years");
+            throw new Exception("Incorrect data displayed while trying to fetch Car Built years using parameter " + pathParameter);
         }
 
     }
@@ -44,9 +44,24 @@ public class BaseClass {
         return allCarTypes;
     }
 
-    public Response getResponse(String pathParameter) {
+    public Response getResponse(String pathParameter) throws Exception {
         RestAssured.baseURI = baseURI;
         requestSpec = RestAssured.given();
-        return requestSpec.request(Method.GET, pathParameter);
+        response = requestSpec.request(Method.GET, pathParameter);
+        if (validateStatusCode(response, pathParameter)) {
+            return response;
+        } else {
+            return null;
+        }
+    }
+
+    public boolean validateStatusCode(Response response, String parameter) throws Exception {
+        int statusCode = response.getStatusCode();
+        if (statusCode == 200) {
+            return true;
+        } else {
+            throw new Exception("Retrieved response StatusCode - " + statusCode + " and error - " + response.jsonPath().get("error").toString()
+                    + ". Please look into parameter - " + parameter);
+        }
     }
 }

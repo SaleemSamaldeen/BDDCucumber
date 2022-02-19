@@ -14,8 +14,6 @@ import java.util.Map;
 public class RestServices extends BaseClass {
 
     public String wa_key = "coding-puzzle-client-449cc9d";
-    public String carTypes = "/main-types";
-    public String builtYear = "/built-dates";
     public String carBrandCode, carBrandName, carModelName;
     public static Map<String, CarTypes> carModelType = new HashMap<>();
     public static Map<String, BuiltYear> carModelBuiltYears = new HashMap<>();
@@ -29,9 +27,9 @@ public class RestServices extends BaseClass {
         baseURI = baseurl;
     }
 
-    @When("user should able to view available Car brands in the market with parameter {string}")
-    public void retrieveDifferentCarBrands(String manufacturer) throws Exception {
-        pathParameter = manufacturer + "?wa_key=" + wa_key;
+    @When("user should able to view available Car brands in the market with parameter {string} and {string}")
+    public void retrieveDifferentCarBrands(String manufacturer, String locale) throws Exception {
+        pathParameter = manufacturer + "?locale=" + locale + "&wa_key=" + wa_key;
         storeCarBrands(pathParameter);
     }
 
@@ -40,47 +38,47 @@ public class RestServices extends BaseClass {
         for (Map.Entry<String, String> entry : availableCarBrands.getWkda().entrySet()) {
             carBrandCode = entry.getKey();
             carBrandName = entry.getValue();
-            if (Strings.isNullOrEmpty(carBrandName) || carBrandName.contains("[0-9]"))
-                throw new Exception("Car Brand for " + carBrandCode + " is empty or contains numeric values. " + "Actual value is " + carBrandName);
+            if (Strings.isNullOrEmpty(carBrandName) || carBrandName.contains("[0-9]*"))
+                throw new Exception("Car Brand belongs to code- " + carBrandCode + " is empty or contains numeric values. " + "Actual value is " + carBrandName);
         }
     }
 
     @And("user checks if page, pageSize, totalPageCount and wkda values are not empty")
     public void checkCarBrandsResponse() throws Exception {
-        if (Strings.isNullOrEmpty(String.valueOf(availableCarBrands.getPage()))) {
+        if (availableCarBrands.getPage() == null || availableCarBrands.getPage() != 0) {
             throw new Exception("Page value for Car Brands response is empty");
         }
-        if (Strings.isNullOrEmpty(String.valueOf(availableCarBrands.getPageSize()))) {
+        if (availableCarBrands.getPageSize() == null || availableCarBrands.getPageSize() != Integer.MAX_VALUE) {
             throw new Exception("Page size value for Car Brands response is empty");
         }
         if (availableCarBrands.getTotalPageCount() != 1) {
             throw new Exception("Total Page Count value for Car Brands response mismatches");
         }
-        if (availableCarBrands.getWkda().size() == 0) {
+        if (availableCarBrands.getWkda() == null || availableCarBrands.getWkda().size() == 0) {
             throw new Exception("No Car Brands displayed");
         }
     }
 
-    @And("user should able to view Car types for each Brands")
-    public void getCarTypesForAllCars() throws Exception {
+    @And("user should able to view Car types for each Brands with parameter {string} and {string}")
+    public void getCarTypesForAllCars(String carTypes, String locale) throws Exception {
         for (Map.Entry<String, String> entry : availableCarBrands.getWkda().entrySet()) {
             carBrandCode = entry.getKey();
             carBrandName = entry.getValue();
-            pathParameter = carTypes + "?manufacturer=" + carBrandCode + "&wa_key=" + wa_key;
+            pathParameter = carTypes + "?manufacturer=" + carBrandCode + "&locale=" + locale + "&wa_key=" + wa_key;
             carModelType.put(carBrandName, getCarMainTypes(pathParameter));
         }
     }
 
-    @And("user should able to view Built Year for each Car Brands")
-    public void getBuiltYearForAllCarBrands() throws Exception {
+    @And("user should able to view Built Year for each Car Brands with parameter {string} and {string}")
+    public void getBuiltYearForAllCarBrands(String builtYear, String locale) throws Exception {
         for (Map.Entry<String, String> carBrand : availableCarBrands.getWkda().entrySet()) {
             carBrandCode = carBrand.getKey();
             carBrandName = carBrand.getValue();
             carTypesList = getCarMainTypesInList(carModelType.get(carBrandName).getWkda());
             carModelBuiltYears = new HashMap<>();
-            for (int i = 0; i < carTypesList.size(); i++) {
-                carModelName = carTypesList.get(i);
-                pathParameter = builtYear + "?manufacturer=" + carBrandCode + "&main-type=" + carModelName + "&wa_key=" + wa_key;
+            for (String carName : carTypesList) {
+                carModelName = carName;
+                pathParameter = builtYear + "?manufacturer=" + carBrandCode + "&main-type=" + carModelName + "&locale=" + locale + "&wa_key=" + wa_key;
                 carModelBuiltYears.put(carModelName, getCarBuiltYears(pathParameter));
             }
             allCarBuiltYears.put(carBrandName, carModelBuiltYears);
@@ -102,14 +100,14 @@ public class RestServices extends BaseClass {
     public void checkPagePageSizeAndCountInCarTypes() throws Exception {
         for (Map.Entry<String, CarTypes> entry : carModelType.entrySet()) {
             carBrandName = entry.getKey();
-            CarTypes carTypes = entry.getValue();
-            if (Strings.isNullOrEmpty(String.valueOf(carTypes.getPage()))) {
-                throw new Exception("Page value in car types is not displayed when user selects car - " + carBrandName);
+            CarTypes carMainTypes = entry.getValue();
+            if (carMainTypes.getPage() == null || carMainTypes.getPage() != 0) {
+                throw new NullPointerException("Page value in car types is not displayed when user selects car - " + carBrandName);
             }
-            if (Strings.isNullOrEmpty(String.valueOf(carTypes.getPageSize()))) {
-                throw new Exception("PageSize value in car types is not displayed when user selects car - " + carBrandName);
+            if (carMainTypes.getPageSize() == null || carMainTypes.getPageSize() != Integer.MAX_VALUE) {
+                throw new NullPointerException("PageSize value in car types is not displayed when user selects car - " + carBrandName);
             }
-            if (carTypes.getTotalPageCount() != 1) {
+            if (carMainTypes.getTotalPageCount() != 1) {
                 throw new Exception("TotalPageCount value in car types is not displayed when user selects car - " + carBrandName);
             }
         }
@@ -123,14 +121,20 @@ public class RestServices extends BaseClass {
             for (Map.Entry<String, BuiltYear> builtYear : builtYearData.entrySet()) {
                 BuiltYear carModelBuiltYear = builtYear.getValue();
                 carModelName = builtYear.getKey();
-                if (String.valueOf(carModelBuiltYear.getPage()).matches("[0-9]*")) {
-
+                if (carModelBuiltYear.getPage() == null || carModelBuiltYear.getPage() != 0) {
+                    throw new NullPointerException("page not displayed for car type - " + carModelName + " which belongs to brand - " + carBrandName);
+                }
+                if (carModelBuiltYear.getPageSize() == null || carModelBuiltYear.getPageSize() != Integer.MAX_VALUE) {
+                    throw new NullPointerException("pageSize not displayed for type - " + carModelName + " which belongs to brand - " + carBrandName);
+                }
+                if (carModelBuiltYear.getTotalPageCount() != 1) {
+                    throw new NullPointerException("totalPageCount not displayed for car type - " + carModelName + " which belongs to brand - " + carBrandName);
                 }
             }
         }
     }
 
-    public void storeCarBrands(String pathParameter) {
+    public void storeCarBrands(String pathParameter) throws Exception {
         availableCarBrands = new CarBrands(getResponse(pathParameter).jsonPath().get("page"), getResponse(pathParameter).jsonPath().get("pageSize"),
                 getResponse(pathParameter).jsonPath().get("totalPageCount"), getResponse(pathParameter).jsonPath().get("wkda"));
     }

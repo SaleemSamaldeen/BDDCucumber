@@ -25,7 +25,7 @@ public class CarTypes {
         return page;
     }
 
-    public void setPage(int page) {
+    public void setPage(Integer page) {
         this.page = page;
     }
 
@@ -37,11 +37,11 @@ public class CarTypes {
         this.pageSize = pageSize;
     }
 
-    public int getTotalPageCount() {
+    public Integer getTotalPageCount() {
         return totalPageCount;
     }
 
-    public void setTotalPageCount(int totalPageCount) {
+    public void setTotalPageCount(Integer totalPageCount) {
         this.totalPageCount = totalPageCount;
     }
 
