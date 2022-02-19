@@ -10,6 +10,10 @@ public class CarBrands {
     private Integer totalPageCount;
     private Map<String, String> wkda;
 
+    public CarBrands() {
+
+    }
+
     public CarBrands(Integer page, Integer pageSize, Integer totalPageCount, Map<String, String> wkda) {
         this.page = page;
         this.pageSize = pageSize;
